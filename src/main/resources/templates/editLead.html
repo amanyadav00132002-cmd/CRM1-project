@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Edit Lead</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+
+body{
+    background:#f4f7fc;
+}
+
+.edit-box{
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.1);
+}
+
+.page-title{
+    font-weight:bold;
+    color:#212529;
+}
+
+.form-control,
+.form-select{
+    height:50px;
+    border-radius:10px;
+}
+
+.btn-update{
+    height:50px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container mt-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-8">
+
+            <div class="edit-box">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+
+                    <h2 class="page-title">
+                        <i class="bi bi-pencil-square"></i>
+                        Edit Lead
+                    </h2>
+
+                    <a href="/dashboard" class="btn btn-dark">
+                        Back
+                    </a>
+
+                </div>
+
+                <form th:action="@{/updateLead}" method="post">
+
+                    <!-- HIDDEN ID -->
+                    <input type="hidden"
+                           name="id"
+                           th:value="${lead.id}">
+
+                    <!-- NAME -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Full Name
+                        </label>
+
+                        <input type="text"
+                               name="name"
+                               class="form-control"
+                               th:value="${lead.name}"
+                               required>
+
+                    </div>
+
+                    <!-- EMAIL -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Email Address
+                        </label>
+
+                        <input type="email"
+                               name="email"
+                               class="form-control"
+                               th:value="${lead.email}">
+
+                    </div>
+
+                    <!-- PHONE -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Phone Number
+                        </label>
+
+                        <input type="text"
+                               name="phone"
+                               class="form-control"
+                               th:value="${lead.phone}">
+
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Lead Status
+                        </label>
+
+                        <select name="status"
+                                class="form-select">
+
+                            <option value="New"
+                                th:selected="${lead.status == 'New'}">
+
+                                New
+
+                            </option>
+
+                            <option value="Hot"
+                                th:selected="${lead.status == 'Hot'}">
+
+                                Hot
+
+                            </option>
+
+                            <option value="Warm"
+                                th:selected="${lead.status == 'Warm'}">
+
+                                Warm
+
+                            </option>
+
+                            <option value="Cold"
+                                th:selected="${lead.status == 'Cold'}">
+
+                                Cold
+
+                            </option>
+
+                            <option value="Lost"
+                                th:selected="${lead.status == 'Lost'}">
+
+                                Lost
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- SOURCE -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Lead Source
+                        </label>
+
+                        <input type="text"
+                               name="source"
+                               class="form-control"
+                               th:value="${lead.source}">
+
+                    </div>
+
+                    <!-- FOLLOWUP -->
+                    <div class="mb-4">
+
+                        <label class="form-label">
+                            Follow-Up Date
+                        </label>
+
+                        <input type="date"
+                               name="followUpDate"
+                               class="form-control"
+                               th:value="${lead.followUpDate}">
+
+                    </div>
+
+                    <!-- BUTTON -->
+                    <button class="btn btn-primary w-100 btn-update">
+
+                        <i class="bi bi-check-circle"></i>
+
+                        Update Lead
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

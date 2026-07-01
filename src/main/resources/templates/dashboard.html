@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>CRM Dashboard</title>
+
+<link rel="manifest" href="/manifest.json">
+   <meta name="theme-color" content="#0d6efd">
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    background:#f5f7fb;
+    overflow-x:hidden;
+}
+
+/* SIDEBAR */
+.sidebar{
+    height:100vh;
+    width:220px;
+    position:fixed;
+    top:0;
+    left:0;
+    background:#212529;
+    padding:20px;
+    color:white;
+    transition:0.3s;
+    z-index:1000;
+}
+
+.sidebar h3{
+    font-weight:bold;
+}
+
+.sidebar a{
+    display:block;
+    color:white;
+    text-decoration:none;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:10px;
+    transition:0.3s;
+}
+
+.sidebar a:hover{
+    background:#0d6efd;
+}
+
+.sidebar.show{
+    left:0;
+}
+
+/* MAIN */
+.main{
+    margin-left:220px;
+    padding:20px;
+}
+
+/* TOPBAR */
+.topbar{
+    background:white;
+    padding:15px 20px;
+    border-radius:12px;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.08);
+}
+
+/* CARD */
+.card-box{
+    border-radius:15px;
+    padding:25px;
+    color:white;
+    text-align:center;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.1);
+    transition:0.3s;
+}
+
+.card-box:hover{
+    transform:translateY(-5px);
+}
+
+/* BOX */
+.table-box{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    margin-top:20px;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.08);
+}
+
+/* TABLE */
+.table th,
+.table td{
+    vertical-align:middle;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .sidebar{
+        left:-220px;
+    }
+
+    .main{
+        margin-left:0;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+    <h3 class="mb-4">CRM Panel</h3>
+
+    <a href="/dashboard" class="bg-primary">
+        <i class="bi bi-speedometer2"></i>
+        Dashboard
+    </a>
+
+    <a href="/addLead">
+        <i class="bi bi-person-plus"></i>
+        Add Lead
+    </a>
+
+    <a href="/customers">
+        <i class="bi bi-people"></i>
+        Customers
+    </a>
+
+    <a href="/reports">
+        <i class="bi bi-bar-chart"></i>
+        Reports
+    </a>
+
+    <a href="/logout">
+        <i class="bi bi-box-arrow-right"></i>
+        Logout
+    </a>
+
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar d-flex justify-content-between align-items-center">
+
+        <div class="d-flex align-items-center">
+
+            <button class="btn btn-dark d-md-none me-3"
+                    onclick="toggleSidebar()">
+
+                <i class="bi bi-list"></i>
+
+            </button>
+
+            <div>
+
+                <h3 class="fw-bold mb-0">
+                    CRM Dashboard
+                </h3>
+
+                <small class="text-muted">
+                    Manage your leads efficiently
+                </small>
+
+            </div>
+
+        </div>
+
+        <h5>
+            Welcome,
+            <span th:text="${username}"></span>
+        </h5>
+
+    </div>
+
+    <!-- FOLLOW UPS -->
+    <div class="table-box">
+
+        <h4 class="mb-3">
+            📅 Today's Follow-ups
+        </h4>
+
+        <div th:if="${#lists.isEmpty(todayLeads)}">
+
+            <div class="alert alert-success">
+                No follow-ups today 🎉
+            </div>
+
+        </div>
+
+        <div th:each="lead : ${todayLeads}">
+
+            <div class="alert alert-primary">
+
+                <strong th:text="${lead.name}"></strong>
+
+                -
+
+                <span th:text="${lead.followUpDate}"></span>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <h4 class="mb-3">
+            ⚠ Overdue Follow-ups
+        </h4>
+
+        <div th:if="${#lists.isEmpty(overdueLeads)}">
+
+            <div class="alert alert-success">
+                No overdue follow-ups ✅
+            </div>
+
+        </div>
+
+        <div th:each="lead : ${overdueLeads}">
+
+            <div class="alert alert-danger">
+
+                <strong th:text="${lead.name}"></strong>
+
+                -
+
+                <span th:text="${lead.followUpDate}"></span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- STATS -->
+    <div class="row mt-4 g-4">
+
+        <div class="col-md-4">
+
+            <div class="card-box bg-primary">
+
+                <i class="bi bi-people-fill fs-1"></i>
+
+                <h4 class="mt-3">
+                    Total Leads
+                </h4>
+
+                <h2 th:text="${totalLeads}">0</h2>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card-box bg-success">
+
+                <i class="bi bi-check-circle-fill fs-1"></i>
+
+                <h4 class="mt-3">
+                    Active Leads
+                </h4>
+
+                <h2 th:text="${activeLeads}">0</h2>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card-box bg-danger">
+
+                <i class="bi bi-x-circle-fill fs-1"></i>
+
+                <h4 class="mt-3">
+                    Lost Leads
+                </h4>
+
+                <h2 th:text="${lostLeads}">0</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row mt-4">
+
+        <div class="col-md-6">
+
+            <div class="table-box">
+
+                <h4>
+                    Lead Status Chart
+                </h4>
+
+                <canvas id="leadChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="table-box">
+
+                <h4>
+                    CRM Performance
+                </h4>
+
+                <canvas id="performanceChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+	<!-- EMPLOYEE TABLE FOR ADMIN -->
+
+	<div th:if="${users != null}"
+	     class="table-box mt-4">
+
+	    <div class="d-flex justify-content-between align-items-center mb-3">
+
+	        <div>
+
+	            <h4 class="mb-0">
+	                Employee Management
+	            </h4>
+
+	            <small class="text-muted">
+	                View employee lead activity
+	            </small>
+
+	        </div>
+
+	    </div>
+
+	    <div class="table-responsive">
+
+	        <table class="table table-hover table-bordered">
+
+	            <thead class="table-dark">
+
+	                <tr>
+
+	                    <th>ID</th>
+	                    <th>Employee Name</th>
+	                    <th>Email</th>
+	                    <th>Role</th>
+	                    <th>Actions</th>
+
+	                </tr>
+
+	            </thead>
+
+	            <tbody>
+
+	                <!-- EMPTY MESSAGE -->
+
+	                <tr th:if="${#lists.isEmpty(users)}">
+
+	                    <td colspan="5"
+	                        class="text-center text-muted">
+
+	                        No Employees Found
+
+	                    </td>
+
+	                </tr>
+
+	                <!-- USER LOOP -->
+
+	                <tr th:each="u : ${users}">
+
+	                    <td th:text="${u.id}"></td>
+
+	                    <td>
+
+	                        <strong th:text="${u.username}"></strong>
+
+	                    </td>
+
+	                    <td th:text="${u.email}"></td>
+
+	                    <td>
+
+	                        <span class="badge bg-primary"
+	                              th:text="${u.role}">
+	                        </span>
+
+	                    </td>
+
+	                    <td>
+
+	                        <!-- VIEW LEADS -->
+
+	                        <a th:href="@{/user-leads/{id}(id=${u.id})}"
+	                           class="btn btn-primary btn-sm">
+
+	                            <i class="bi bi-eye"></i>
+	                            View Leads
+
+	                        </a>
+
+	                    </td>
+
+	                </tr>
+
+	            </tbody>
+
+	        </table>
+
+	    </div>
+
+	</div>
+	
+    <!-- LEADS TABLE -->
+    <div class="table-box">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <h4>
+                Recent Leads
+            </h4>
+
+            <form action="/dashboard"
+                  method="get"
+                  class="d-flex">
+
+                <input type="text"
+                       name="keyword"
+                       class="form-control me-2"
+                       placeholder="Search Lead">
+
+                <button class="btn btn-dark">
+                    Search
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover table-bordered">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Source</th>
+                        <th>Follow Up</th>
+						<th>Assigned To</th>
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr th:each="lead : ${leads}">
+
+                        <td th:text="${lead.id}"></td>
+
+                        <td th:text="${lead.name}"></td>
+
+                        <td th:text="${lead.email}"></td>
+
+						<td>
+						    <a th:href="'tel:' + ${lead.phone}"
+						       th:text="${lead.phone}"
+						       class="text-decoration-none">
+						    </a>
+						</td>
+
+                        <td>
+
+                            <span class="badge bg-success"
+                                  th:if="${lead.status == 'Active'}">
+
+                                Active
+
+                            </span>
+
+                            <span class="badge bg-danger"
+                                  th:if="${lead.status == 'Lost'}">
+
+                                Lost
+
+                            </span>
+
+                            <span class="badge bg-primary"
+                                  th:if="${lead.status == 'New'}">
+
+                                New
+
+                            </span>
+
+                        </td>
+
+                        <td th:text="${lead.source}"></td>
+
+                        <td th:text="${lead.followUpDate}"></td>
+
+						<td>
+
+						    <span th:if="${lead.assignedUser != null}"
+						          th:text="${lead.assignedUser.username}">
+						    </span>
+
+						    <span th:if="${lead.assignedUser == null}"
+						          class="text-muted">
+
+						        Not Assigned
+
+						    </span>
+
+						</td>
+						
+						<td>
+
+						    <!-- VIEW DETAILS -->
+
+						    <a th:href="@{/lead-details/{id}(id=${lead.id})}"
+						       class="btn btn-info btn-sm">
+
+						        <i class="bi bi-eye"></i>
+                                   View Leads
+						    </a>
+
+						    <!-- EDIT -->
+
+						    <a th:href="@{/editLead/{id}(id=${lead.id})}"
+						       class="btn btn-warning btn-sm">
+
+						        <i class="bi bi-pencil-square"></i>
+                                        Edit
+						    </a>
+
+							<a th:href="@{/assignLead/{id}(id=${lead.id})}"
+							   class="btn btn-secondary btn-sm">
+
+							    <i class="bi bi-person-check"></i>
+							    Assign
+
+							</a>
+							
+						    <!-- DELETE -->
+
+						    <a th:href="@{/deleteLead/{id}(id=${lead.id})}"
+						       class="btn btn-danger btn-sm"
+						       onclick="return confirm('Delete this lead?')">
+
+						        <i class="bi bi-trash"></i>
+                                        Delete
+						    </a>
+							
+							
+						</td>
+
+                    </tr>
+
+                    <!-- EMPTY -->
+                    <tr th:if="${#lists.isEmpty(leads)}">
+
+                        <td colspan="8"
+                            class="text-center text-muted">
+
+                            No Leads Found
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- JS -->
+<script>
+
+function toggleSidebar(){
+
+    document.querySelector(".sidebar")
+            .classList.toggle("show");
+
+}
+
+</script>
+
+<!-- CHART JS -->
+<script th:inline="javascript">
+
+new Chart(document.getElementById('leadChart'), {
+
+    type: 'doughnut',
+
+    data: {
+
+        labels: ['Active', 'Lost'],
+
+        datasets: [{
+
+            data: [
+
+                [[${activeLeads}]],
+                [[${lostLeads}]]
+
+            ],
+
+            backgroundColor: [
+
+                '#198754',
+                '#dc3545'
+
+            ]
+
+        }]
+
+    }
+
+});
+
+new Chart(document.getElementById('performanceChart'), {
+
+    type: 'bar',
+
+    data: {
+
+        labels: ['Today', 'Overdue'],
+
+        datasets: [{
+
+            data: [
+
+                [[${#lists.size(todayLeads)}]],
+                [[${#lists.size(overdueLeads)}]]
+
+            ],
+
+            backgroundColor: [
+
+                '#0d6efd',
+                '#fd7e14'
+
+            ]
+
+        }]
+
+    }
+
+});
+
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.log(err));
+}
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,380 @@
+html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>CRM Reports</title>
+
+<link rel="manifest" href="/manifest.json">
+   <meta name="theme-color" content="#0d6efd">
+
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Chart JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    background:#f5f7fb;
+}
+
+/* HEADER */
+.page-title{
+    font-weight:bold;
+}
+
+/* CARD */
+.report-card{
+    background:white;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0px 2px 15px rgba(0,0,0,0.08);
+}
+
+/* STATS */
+.stat-box{
+    border-radius:15px;
+    padding:25px;
+    color:white;
+    text-align:center;
+    transition:0.3s;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.1);
+}
+
+.stat-box:hover{
+    transform:translateY(-5px);
+}
+
+/* CHART */
+.chart-box{
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0px 2px 10px rgba(0,0,0,0.08);
+    margin-top:25px;
+}
+
+/* TABLE */
+.table th{
+    width:50%;
+}
+
+@media(max-width:768px){
+
+    .stat-box{
+        margin-bottom:15px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container py-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
+        <div>
+
+            <h2 class="page-title">
+
+                <i class="bi bi-bar-chart-fill"></i>
+                CRM Reports & Analytics
+
+            </h2>
+
+            <p class="text-muted mb-0">
+                Complete CRM performance overview
+            </p>
+
+        </div>
+
+        <a href="/dashboard"
+           class="btn btn-primary">
+
+            <i class="bi bi-arrow-left"></i>
+            Dashboard
+
+        </a>
+
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-4">
+
+        <div class="col-md-4">
+
+            <div class="stat-box bg-primary">
+
+                <i class="bi bi-people-fill fs-1"></i>
+
+                <h4 class="mt-3">
+                    Total Leads
+                </h4>
+
+                <h2 th:text="${totalLeads}">0</h2>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="stat-box bg-success">
+
+                <i class="bi bi-check-circle-fill fs-1"></i>
+
+                <h4 class="mt-3">
+                    Active Leads
+                </h4>
+
+                <h2 th:text="${activeLeads}">0</h2>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="stat-box bg-danger">
+
+                <i class="bi bi-x-circle-fill fs-1"></i>
+
+                <h4 class="mt-3">
+                    Lost Leads
+                </h4>
+
+                <h2 th:text="${lostLeads}">0</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- REPORT TABLE -->
+    <div class="report-card mt-4">
+
+        <h4 class="mb-4">
+            Detailed CRM Report
+        </h4>
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-hover align-middle">
+
+                <tbody>
+
+                    <tr>
+
+                        <th>Total Leads</th>
+                        <td th:text="${totalLeads}"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>Active Leads</th>
+                        <td th:text="${activeLeads}"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>Lost Leads</th>
+                        <td th:text="${lostLeads}"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>Today's Follow-ups</th>
+                        <td th:text="${todayLeads}"></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <th>Overdue Follow-ups</th>
+                        <td th:text="${overdueLeads}"></td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row mt-4">
+
+        <!-- STATUS CHART -->
+        <div class="col-md-6">
+
+            <div class="chart-box">
+
+                <h4 class="mb-3">
+                    Lead Status Chart
+                </h4>
+
+                <canvas id="leadChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <!-- FOLLOWUP CHART -->
+        <div class="col-md-6">
+
+            <div class="chart-box">
+
+                <h4 class="mb-3">
+                    Follow-up Analytics
+                </h4>
+
+                <canvas id="followupChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CHART JS -->
+<script th:inline="javascript">
+
+// LEAD STATUS CHART
+new Chart(document.getElementById('leadChart'), {
+
+    type: 'doughnut',
+
+    data: {
+
+        labels: ['Active', 'Lost'],
+
+        datasets: [{
+
+            data: [
+
+                [[${activeLeads}]],
+                [[${lostLeads}]]
+
+            ],
+
+            backgroundColor: [
+
+                '#198754',
+                '#dc3545'
+
+            ],
+
+            borderWidth: 2
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+
+                position: 'bottom'
+
+            }
+
+        }
+
+    }
+
+});
+
+// FOLLOW-UP CHART
+new Chart(document.getElementById('followupChart'), {
+
+    type: 'bar',
+
+    data: {
+
+        labels: ['Today', 'Overdue'],
+
+        datasets: [{
+
+            label: 'Follow-ups',
+
+            data: [
+
+                [[${todayLeads}]],
+                [[${overdueLeads}]]
+
+            ],
+
+            backgroundColor: [
+
+                '#0d6efd',
+                '#fd7e14'
+
+            ],
+
+            borderRadius: 10
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        scales: {
+
+            y: {
+
+                beginAtZero: true
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.log(err));
+}
+</script>
+
+
+</body>
+</html>
+```
