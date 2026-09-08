@@ -1,6 +1,7 @@
 package in.sp.main.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,8 @@ public class LoginController {
     @Autowired
     private UserRepository userRepository;
 
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    
     @GetMapping("/")
     public String loginPage(HttpSession session,
                             HttpServletResponse response) {
@@ -56,9 +59,9 @@ public class LoginController {
         User user = userRepository
                 .findByEmail(email.trim());
 
-        // Validate login
+        // Validate login using BCrypt
         if(user != null &&
-           password.equals(user.getPassword())) {
+           passwordEncoder.matches(password, user.getPassword())) {
 
             session.setAttribute("username",
                     user.getUsername());

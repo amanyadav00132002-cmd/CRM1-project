@@ -1,5 +1,6 @@
 package in.sp.main.controller;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,9 @@ import in.sp.main.repository.UserRepository;
 public class RegisterController {
 
     private final UserRepository userRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder =
+            new BCryptPasswordEncoder();
 
     public RegisterController(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -30,7 +34,7 @@ public class RegisterController {
         User existingUser =
                 userRepository.findByEmail(user.getEmail());
 
-        if(existingUser != null) {
+        if (existingUser != null) {
 
             model.addAttribute("error",
                     "Email already exists");
@@ -39,14 +43,14 @@ public class RegisterController {
         }
 
         // Basic validation
-        if(user.getUsername() == null ||
-           user.getUsername().trim().isEmpty() ||
+        if (user.getUsername() == null ||
+            user.getUsername().trim().isEmpty() ||
 
-           user.getEmail() == null ||
-           user.getEmail().trim().isEmpty() ||
+            user.getEmail() == null ||
+            user.getEmail().trim().isEmpty() ||
 
-           user.getPassword() == null ||
-           user.getPassword().trim().isEmpty()) {
+            user.getPassword() == null ||
+            user.getPassword().trim().isEmpty()) {
 
             model.addAttribute("error",
                     "All fields are required");
@@ -57,6 +61,11 @@ public class RegisterController {
         // Default role
         user.setRole("USER");
 
+        // Encrypt password using BCrypt
+        user.setPassword(
+                passwordEncoder.encode(user.getPassword())
+        );
+
         // Save user
         userRepository.save(user);
 
@@ -66,3 +75,4 @@ public class RegisterController {
         return "login";
     }
 }
+
