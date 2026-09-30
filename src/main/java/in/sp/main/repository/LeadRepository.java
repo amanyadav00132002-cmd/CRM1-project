@@ -40,6 +40,9 @@ public interface LeadRepository
     
     List<Lead> findByAssignedUser(User assignedUser);
 
+//  Use specific overdue follow ups 
+    List<Lead> findByFollowUpDateBeforeAndAssignedUser(LocalDate date, User assignedUser);
+    
     // Search by email
     Lead findByEmail(String email);
 
@@ -47,4 +50,29 @@ public interface LeadRepository
     Lead findByPhone(String phone);
     
     List<Lead> findByAssignedUserAndStatusNot(User assignedUser, String status);
+    
+    List<Lead> findByFollowUpDateAndAssignedUser(
+            LocalDate date,
+            User assignedUser);
+
+ // Count total leads assigned to user
+    long countByAssignedUser(User assignedUser);
+
+    // Count active leads assigned to user
+    long countByAssignedUserAndStatusIn(
+            User assignedUser,
+            List<String> statuses
+    );
+
+    // Count lost leads assigned to user
+    long countByAssignedUserAndStatus(
+            User assignedUser,
+            String status
+    );
+    
+    long countByStatusIn(List<String> statuses);
+    
+    List<Lead> findByStatusIn(List<String> statuses);
+    
+    List<Lead> findByAssignedUserAndStatusIn(User assignedUser, List<String> statuses);
 }

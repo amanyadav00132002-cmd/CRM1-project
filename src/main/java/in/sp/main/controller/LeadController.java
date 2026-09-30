@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import in.sp.main.entity.Lead;
 import in.sp.main.entity.User;
 import in.sp.main.repository.UserRepository;
+import in.sp.main.service.CallLogService;
 import in.sp.main.service.LeadNoteService;
 import in.sp.main.service.LeadService;
 import in.sp.main.service.LeadStatusHistoryService;
+import in.sp.main.service.NotificationService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
@@ -28,14 +30,28 @@ public class LeadController {
     @Autowired
     private LeadStatusHistoryService historyService;
     
+    private final NotificationService notificationService;
+    
+    private final CallLogService callLogService;
+    
+    
+    public LeadController(NotificationService notificationService,
+    		CallLogService callLogService) {
+    	
+    	this.notificationService = notificationService;
+    	this.callLogService = callLogService;
+    }
     
     @GetMapping("/dashboard")
-    public String dashboard(@RequestParam(required = false) String keyword,
-                            Model model,
-                            HttpSession session,
-                            HttpServletResponse response) {
+    public String dashboard(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            Model model,
+            HttpSession session,
+            HttpServletResponse response) {
 
-        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Cache-Control",
+                "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
 
@@ -61,8 +77,75 @@ public class LeadController {
             return "redirect:/";
         }
 
-     // SEARCH LOGIC
-        if (keyword != null && !keyword.trim().isEmpty()) {
+
+        // =========================
+        // LEAD LIST
+        // =========================
+
+        if (status != null && !status.trim().isEmpty()) {
+
+            if ("active".equalsIgnoreCase(status)) {
+
+                if ("ADMIN".equals(role)) {
+
+                    model.addAttribute("leads",
+                            leadService.getLeadsByStatusList(
+                                    java.util.List.of(
+                                            "New",
+                                            "Hot",
+                                            "Warm",
+                                            "Cold"
+                                    )
+                            ));
+
+                } else {
+
+                    model.addAttribute("leads",
+                            leadService.getLeadsByUserAndStatusList(
+                                    user,
+                                    java.util.List.of(
+                                            "New",
+                                            "Hot",
+                                            "Warm",
+                                            "Cold"
+                                    )
+                            ));
+                }
+
+            } else if ("lost".equalsIgnoreCase(status)) {
+
+                if ("ADMIN".equals(role)) {
+
+                    model.addAttribute("leads",
+                            leadService.getLeadsByStatusList(
+                                    java.util.List.of("Lost")
+                            ));
+
+                } else {
+
+                    model.addAttribute("leads",
+                            leadService.getLeadsByUserAndStatusList(
+                                    user,
+                                    java.util.List.of("Lost")
+                            ));
+                }
+
+            } else {
+
+                if ("ADMIN".equals(role)) {
+                    model.addAttribute("leads",
+                            leadService.getAll());
+                } else {
+                    model.addAttribute("leads",
+                            leadService.getAssignedLeads(user));
+                }
+            }
+
+        } else if (keyword != null && !keyword.trim().isEmpty()) {
+
+            // =========================
+            // SEARCH LOGIC
+            // =========================
 
             if ("ADMIN".equals(role)) {
 
@@ -75,17 +158,22 @@ public class LeadController {
             } else {
 
                 model.addAttribute("leads",
-                        leadService.searchLeadsByUser(keyword, user));
+                        leadService.searchLeadsByUser(
+                                keyword,
+                                user));
             }
 
         } else {
+
+            // =========================
+            // NORMAL DASHBOARD LEADS
+            // =========================
 
             if ("ADMIN".equals(role)) {
 
                 model.addAttribute("users",
                         userRepository.findByRole("USER"));
 
-                // IMPORTANT
                 model.addAttribute("leads",
                         leadService.getAll());
 
@@ -96,23 +184,85 @@ public class LeadController {
             }
         }
 
-        model.addAttribute("todayLeads",
-                leadService.getTodayFollowUps());
 
-        model.addAttribute("overdueLeads",
-                leadService.getOverdueFollowUps());
+        // =========================
+        // TODAY FOLLOW-UPS
+        // =========================
 
-        model.addAttribute("activeLeads",
-                leadService.countActiveLeads());
+        if ("ADMIN".equals(role)) {
 
-        model.addAttribute("lostLeads",
-                leadService.countLostLeads());
+            model.addAttribute("todayLeads",
+                    leadService.getTodayFollowUps());
 
-        model.addAttribute("totalLeads",
-                leadService.getAll().size());
+        } else {
+
+            model.addAttribute("todayLeads",
+                    leadService.getTodayFollowUpsForUser(user));
+        }
+
+
+        // =========================
+        // OVERDUE FOLLOW-UPS
+        // =========================
+
+        if ("ADMIN".equals(role)) {
+
+            model.addAttribute("overdueLeads",
+                    leadService.getOverdueFollowUps());
+
+        } else {
+
+            model.addAttribute("overdueLeads",
+                    leadService.getOverdueFollowUpsForUser(user));
+        }
+
+
+        // =========================
+        // DASHBOARD COUNTS
+        // =========================
+
+        if ("ADMIN".equals(role)) {
+
+            model.addAttribute("totalLeads",
+                    leadService.getAll().size());
+
+            model.addAttribute("activeLeads",
+                    leadService.countActiveLeads());
+
+            model.addAttribute("lostLeads",
+                    leadService.countLostLeads());
+
+        } else {
+
+            model.addAttribute("totalLeads",
+                    leadService.countTotalLeadsForUser(user));
+
+            model.addAttribute("activeLeads",
+                    leadService.countActiveLeadsForUser(user));
+
+            model.addAttribute("lostLeads",
+                    leadService.countLostLeadsForUser(user));
+        }
+
+      
+        if (userId != null) {
+
+            User currentUser = userRepository
+                    .findById(userId)
+                    .orElse(null);
+
+            if (currentUser != null) {
+
+                model.addAttribute(
+                        "unreadCount",
+                        notificationService.getUnreadCount(currentUser)
+                );
+            }
+        }
 
         return "dashboard";
     }
+    
     @GetMapping("/addLead")
     public String addLeadPage(HttpSession session) {
 
@@ -124,19 +274,70 @@ public class LeadController {
     }
 
     @PostMapping("/saveLead")
-    public String saveLead(@ModelAttribute Lead lead, HttpSession session) {
+    public String saveLead(@ModelAttribute Lead lead, HttpSession session, Model model) {
 
         if(session.getAttribute("username") == null) {
             return "redirect:/";
         }
 
+//      Check duplicate client by phone no.
+        Lead existingLead = leadService.getLeadByPhone(lead.getPhone());
+
+        if (existingLead != null) {
+
+            User existingUser = existingLead.getAssignedUser();
+
+            if (existingUser != null) {
+            	
+//            	Current user who is trying to add the client
+            	String currentUsername = (String) session.getAttribute("username");
+            	
+//            	Notification for existing owner
+            	String  notificationMessage = "Another user (" + currentUsername
+            			+") is trying to add your client: "
+            			+ existingLead.getName()
+            			+ ". Client is already assigned to you.";
+            	
+            	notificationService.createNotification(
+            			existingUser,
+            			notificationMessage);
+            
+//            	Message for current user 
+            	String ownerPhone = existingUser.getPhone();
+
+                model.addAttribute(
+                        "error",
+                        "This client already exists in CRM. "
+                        + "Assigned to: " + existingUser.getUsername()
+                        + "\n contact Number: "
+                        +  (ownerPhone != null ? ownerPhone : "Not available")
+                        + ". Please contact the assigned user."
+                );
+
+            } else {
+
+                model.addAttribute(
+                        "error",
+                        "Client already exists in CRM, "
+                        + "but no user is currently assigned."
+                );
+            }
+
+            return "addLead";
+        }
+        
         lead.setCreatedDate(LocalDate.now());
 
         Long userId = (Long) session.getAttribute("userId");
 
         User user = userRepository.findById(userId).orElse(null);
 
+        if(user !=null) {
+        
         lead.setUser(user);
+        	
+        lead.setAssignedUser(user);
+        }
 
         leadService.saveLead(lead);
 
@@ -144,6 +345,34 @@ public class LeadController {
         return "redirect:/dashboard";
     }
 
+    @PostMapping("/saveCall")
+    public String saveCall(
+    		@RequestParam Long leadId,
+    		@RequestParam String callType,
+    		@RequestParam String callStatus,
+    		@RequestParam(required = false) String notes,
+    		HttpSession session) {
+    	
+    	if (session.getAttribute("username") == null) {
+    		return "redirect:/";
+    	}
+    	
+    	Long userId = (Long) session.getAttribute("userId");
+    	
+    	User user = userRepository.findById(userId).orElse(null);
+    	
+    	Lead lead = leadService.getLeadById(leadId);
+    	
+    	if (user == null | lead == null) {
+    		return "redirect:/dashboard";
+    	}
+    	
+    	callLogService.saveCall(lead,user,callType,callStatus,notes);
+    	
+    	return "redirect:/lead-details/" + leadId;
+    }
+    
+    
     @GetMapping("/deleteLead/{id}")
     public String deleteLead(@PathVariable Long id,
                              HttpSession session) {
@@ -322,6 +551,7 @@ public class LeadController {
     
     @GetMapping("/reports")
     public String reportPage(HttpSession session, Model model) {
+    	
     	if(session.getAttribute("username") == null) {
     		return "redirect:/";
     	}
@@ -329,21 +559,84 @@ public class LeadController {
     	  model.addAttribute("username",
     	            session.getAttribute("username"));
 
-    	    model.addAttribute("totalLeads",
-    	            leadService.getAll().size());
+    	  String role = (String) session.getAttribute("role");
+    	  
+    	  Long userId = (Long) session.getAttribute("userId");
+    	  
+    	  if (userId == null) {
+    		  return "redirect:/";
+    	  }
+    	  
+    	  User user = userRepository.findById(userId).orElse(null);
+    	  
+    	  if (user == null) {
+    		  return "redirect:/";
+    	  }
+    	  
+    	  // =========================
+    	    // ADMIN REPORTS
+    	    // =========================
 
-    	    model.addAttribute("activeLeads",
-    	            leadService.countActiveLeads());
+    	    if ("ADMIN".equals(role)) {
 
-    	    model.addAttribute("lostLeads",
-    	            leadService.countLostLeads());
+    	        model.addAttribute(
+    	                "totalLeads",
+    	                leadService.getAll().size()
+    	        );
 
-    	    model.addAttribute("todayLeads",
-    	            leadService.getTodayFollowUps().size());
+    	        model.addAttribute(
+    	                "activeLeads",
+    	                leadService.countActiveLeads()
+    	        );
 
-    	    model.addAttribute("overdueLeads",
-    	            leadService.getOverdueFollowUps().size());
+    	        model.addAttribute(
+    	                "lostLeads",
+    	                leadService.countLostLeads()
+    	        );
 
+    	        model.addAttribute(
+    	                "todayLeads",
+    	                leadService.getTodayFollowUps().size()
+    	        );
+
+    	        model.addAttribute(
+    	                "overdueLeads",
+    	                leadService.getOverdueFollowUps().size()
+    	        );
+
+    	    }
+
+    	    // =========================
+    	    // USER REPORTS
+    	    // =========================
+
+    	    else {
+
+    	        model.addAttribute(
+    	                "totalLeads",
+    	                leadService.countTotalLeadsForUser(user)
+    	        );
+
+    	        model.addAttribute(
+    	                "activeLeads",
+    	                leadService.countActiveLeadsForUser(user)
+    	        );
+
+    	        model.addAttribute(
+    	                "lostLeads",
+    	                leadService.countLostLeadsForUser(user)
+    	        );
+
+    	        model.addAttribute(
+    	                "todayLeads",
+    	                leadService.getTodayFollowUpsForUser(user).size()
+    	        );
+
+    	        model.addAttribute(
+    	                "overdueLeads",
+    	                leadService.getOverdueFollowUpsForUser(user).size()
+    	        );
+    	    }
     	    return "reports";
     }
     
@@ -387,12 +680,24 @@ public class LeadController {
             return "redirect:/";
         }
 
+        String role = (String) session.getAttribute("role");
+        Long userId = (Long) session.getAttribute("userId");
+        
         Lead lead = leadService.getLeadById(id);
 
         if(lead == null) {
             return "redirect:/dashboard";
         }
 
+//        user can seee their own lead
+        if(!"ADMIN".equals(role)) {
+        	
+        	if(lead.getAssignedUser() == null ||
+        		!lead.getAssignedUser().getId().equals(userId)) {
+        		return "redirect:/dashboard";
+        	}
+        }
+        
         model.addAttribute("lead", lead);
 
         model.addAttribute("notes",
@@ -401,7 +706,85 @@ public class LeadController {
         model.addAttribute("history",
                 historyService.getHistory(id));
         
+        model.addAttribute("callHistory",
+        		callLogService.getCallHistory(lead));
+        
         return "lead-details";
+    }
+    	
+    @PostMapping("/lead-details/{id}/status")
+    public String UpdateLeadStatus(@PathVariable Long id, @RequestParam("status") String status, HttpSession session) {
+    	
+    	if(session.getAttribute("username") == null) {
+    		return "redirect:/";
+    	}
+    	
+    	String role = (String) session.getAttribute("role");
+    	Long userId = (Long) session.getAttribute("userId");
+    	
+    	Lead lead = leadService.getLeadById(id);
+    	
+    	if(lead == null) {
+    		return "redirect:/dashboard";
+    	}
+    	
+    	// USER can update only their assigned lead
+    	if(!"ADMIN".equals(role)) {
+    		
+    		if(lead.getAssignedUser() == null || 
+    				!lead.getAssignedUser().getId().equals(userId)) {
+    			
+    			return "redirect:/dashboard";
+    		}
+    	}
+    	
+    	if("NOT INTERESTED".equals(status)) {
+    		lead.setStatus("NOT_INTERESTED");
+    	}
+    	else if("INTERESTED".equals(status)) {
+    		lead.setStatus("INTERESTED");
+    	}
+    	
+    	leadService.saveLead(lead);
+    	
+    	return "redirect:/lead-details/" + id;
+    }
+    
+    @GetMapping("/notifications")
+    public String notifications(
+            HttpSession session,
+            Model model) {
+
+        if (session.getAttribute("username") == null) {
+            return "redirect:/";
+        }
+
+        Long userId =
+                (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return "redirect:/";
+        }
+
+        User user = userRepository
+                .findById(userId)
+                .orElse(null);
+
+        if (user == null) {
+            return "redirect:/";
+        }
+
+        model.addAttribute(
+                "username",
+                user.getUsername()
+        );
+
+        model.addAttribute(
+                "notifications",
+                notificationService.getUserNotifications(user)
+        );
+
+        return "notifications";
     }
     
     @GetMapping("/assignLead/{id}")
@@ -474,18 +857,33 @@ public class LeadController {
             return "redirect:/";
         }
 
+        String role = (String) session.getAttribute("role");
+        Long userId = (Long) session.getAttribute("userId");
+        
+        
         Lead lead = leadService.getLeadById(leadId);
 
         if(lead == null) {
             return "redirect:/dashboard";
         }
 
+        // USER can update only their assigned lead
+        if (!"ADMIN".equals(role)) {
+
+            if (lead.getAssignedUser() == null ||
+                !lead.getAssignedUser().getId().equals(userId)) {
+
+                return "redirect:/dashboard";
+            }
+        }
+        
         if("NOT_INTERESTED".equals(status)) {
 
             lead.setStatus("NOT_INTERESTED");
 
-            // User se remove
-//            lead.setAssignedUser(null);
+         // Keep assigned user
+            // Do NOT set assignedUser to null
+            
 
         } else if("INTERESTED".equals(status)) {
 

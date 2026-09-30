@@ -106,17 +106,155 @@ body{
     vertical-align:middle;
 }
 
-/* MOBILE */
-@media(max-width:768px){
+/* RESPONSIVE DESIGN */
 
-    .sidebar{
-        left:-220px;
+@media (max-width: 768px) {
+
+    .sidebar {
+        left: -220px;
+        width: 220px;
+        padding: 15px;
     }
 
-    .main{
-        margin-left:0;
+    .sidebar.show {
+        left: 0;
     }
 
+    .sidebar h3 {
+        font-size: 20px;
+    }
+
+    .sidebar a {
+        font-size: 14px;
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .topbar {
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    .topbar h3 {
+        font-size: 20px;
+    }
+
+    .topbar small {
+        font-size: 11px;
+    }
+
+    .topbar h5 {
+        font-size: 13px;
+        margin-bottom: 0;
+    }
+
+    .card-box {
+        padding: 18px 10px;
+        border-radius: 12px;
+    }
+
+    .card-box i {
+        font-size: 32px !important;
+    }
+
+    .card-box h4 {
+        font-size: 16px;
+    }
+
+    .card-box h2 {
+        font-size: 24px;
+    }
+
+    .table-box {
+        padding: 12px;
+        margin-top: 15px;
+        border-radius: 12px;
+    }
+
+    .table-box h4 {
+        font-size: 18px;
+    }
+
+    .table {
+        font-size: 13px;
+    }
+
+    .table th,
+    .table td {
+        white-space: nowrap;
+    }
+
+    .btn-sm {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+
+    .alert {
+        font-size: 13px;
+        padding: 10px;
+    }
+
+    /* Search */
+    .table-box form {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .table-box form input {
+        font-size: 13px;
+    }
+
+    .table-box form button {
+        font-size: 13px;
+        white-space: nowrap;
+    }
+}
+
+/* VERY SMALL MOBILE */
+
+@media (max-width: 480px) {
+
+    .topbar h3 {
+        font-size: 17px;
+    }
+
+    .topbar h5 {
+        font-size: 11px;
+    }
+
+    .topbar small {
+        display: none;
+    }
+
+    .card-box {
+        padding: 15px 8px;
+    }
+
+    .card-box i {
+        font-size: 28px !important;
+    }
+
+    .card-box h4 {
+        font-size: 14px;
+    }
+
+    .card-box h2 {
+        font-size: 22px;
+    }
+
+    .table-box h4 {
+        font-size: 16px;
+    }
+
+    .btn-sm {
+        font-size: 11px;
+        padding: 4px 7px;
+    }
 }
 
 </style>
@@ -139,10 +277,23 @@ body{
         Add Lead
     </a>
 
-    <a href="/customers">
-        <i class="bi bi-people"></i>
-        Customers
-    </a>
+	<a href="/customers" onclick="closeSidebar()">
+	    <i class="bi bi-people"></i>
+	    Customers
+	</a>
+	
+	<a href="/notifications">
+
+	    <i class="bi bi-bell"></i>
+
+	    Notifications
+
+	    <span th:if="${unreadCount > 0}"
+	          class="badge bg-danger ms-2"
+	          th:text="${unreadCount}">
+	    </span>
+
+	</a>
 
     <a href="/reports">
         <i class="bi bi-bar-chart"></i>
@@ -252,57 +403,45 @@ body{
     </div>
 
     <!-- STATS -->
-    <div class="row mt-4 g-4">
+	<div class="row mt-4 g-4">
 
-        <div class="col-md-4">
+	    <!-- TOTAL LEADS -->
+	    <div class="col-md-4">
+	        <a href="/dashboard"
+	           style="text-decoration:none;">
+	            <div class="card-box bg-primary">
+	                <i class="bi bi-people-fill fs-1"></i>
+	                <h4 class="mt-3">Total Leads</h4>
+	                <h2 th:text="${totalLeads}">0</h2>
+	            </div>
+	        </a>
+	    </div>
 
-            <div class="card-box bg-primary">
+	    <!-- ACTIVE LEADS -->
+	    <div class="col-md-4">
+	        <a href="/dashboard?status=active"
+	           style="text-decoration:none;">
+	            <div class="card-box bg-success">
+	                <i class="bi bi-check-circle-fill fs-1"></i>
+	                <h4 class="mt-3">Active Leads</h4>
+	                <h2 th:text="${activeLeads}">0</h2>
+	            </div>
+	        </a>
+	    </div>
 
-                <i class="bi bi-people-fill fs-1"></i>
+	    <!-- LOST LEADS -->
+	    <div class="col-md-4">
+	        <a href="/dashboard?status=lost"
+	           style="text-decoration:none;">
+	            <div class="card-box bg-danger">
+	                <i class="bi bi-x-circle-fill fs-1"></i>
+	                <h4 class="mt-3">Lost Leads</h4>
+	                <h2 th:text="${lostLeads}">0</h2>
+	            </div>
+	        </a>
+	    </div>
 
-                <h4 class="mt-3">
-                    Total Leads
-                </h4>
-
-                <h2 th:text="${totalLeads}">0</h2>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <div class="card-box bg-success">
-
-                <i class="bi bi-check-circle-fill fs-1"></i>
-
-                <h4 class="mt-3">
-                    Active Leads
-                </h4>
-
-                <h2 th:text="${activeLeads}">0</h2>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <div class="card-box bg-danger">
-
-                <i class="bi bi-x-circle-fill fs-1"></i>
-
-                <h4 class="mt-3">
-                    Lost Leads
-                </h4>
-
-                <h2 th:text="${lostLeads}">0</h2>
-
-            </div>
-
-        </div>
-
-    </div>
+	</div>
 
     <!-- CHARTS -->
     <div class="row mt-4">
@@ -614,12 +753,18 @@ body{
 <!-- JS -->
 <script>
 
-function toggleSidebar(){
+	function toggleSidebar() {
+	    document.querySelector(".sidebar").classList.toggle("show");
+	}
 
-    document.querySelector(".sidebar")
-            .classList.toggle("show");
-
-}
+	// Mobile par menu item click karne ke baad sidebar close
+	document.querySelectorAll(".sidebar a").forEach(function(link) {
+	    link.addEventListener("click", function() {
+	        if (window.innerWidth <= 768) {
+	            document.querySelector(".sidebar").classList.remove("show");
+	        }
+	    });
+	});
 
 </script>
 

@@ -200,6 +200,117 @@ body{
 
 	</div>
 	
+	<!-- CALL MANAGEMENT -->
+
+	<div class="box">
+
+	    <h4 class="mb-3">
+	        <i class="bi bi-telephone"></i>
+	        Call Management
+	    </h4>
+
+	    <form th:action="@{/saveCall}" method="post">
+
+	        <input type="hidden"
+	               name="leadId"
+	               th:value="${lead.id}">
+
+	        <div class="row">
+
+	            <!-- CALL TYPE -->
+	            <div class="col-md-6 mb-3">
+
+	                <label class="fw-bold">
+	                    Call Type
+	                </label>
+
+	                <select name="callType"
+	                        class="form-select"
+	                        required>
+
+	                    <option value="">Select Call Type</option>
+
+	                    <option value="OUTGOING">
+	                        Outgoing Call
+	                    </option>
+
+	                    <option value="INCOMING">
+	                        Incoming Call
+	                    </option>
+
+	                </select>
+
+	            </div>
+
+	            <!-- CALL STATUS -->
+	            <div class="col-md-6 mb-3">
+
+	                <label class="fw-bold">
+	                    Call Result
+	                </label>
+
+	                <select name="callStatus"
+	                        class="form-select"
+	                        required>
+
+	                    <option value="">
+	                        Select Call Result
+	                    </option>
+
+	                    <option value="CONNECTED">
+	                        Connected
+	                    </option>
+
+	                    <option value="NO_ANSWER">
+	                        No Answer
+	                    </option>
+
+	                    <option value="BUSY">
+	                        Busy
+	                    </option>
+
+	                    <option value="INTERESTED">
+	                        Interested
+	                    </option>
+
+	                    <option value="NOT_INTERESTED">
+	                        Not Interested
+	                    </option>
+
+	                </select>
+
+	            </div>
+
+	        </div>
+
+	        <!-- NOTES -->
+
+	        <div class="mb-3">
+
+	            <label class="fw-bold">
+	                Call Notes
+	            </label>
+
+	            <textarea name="notes"
+	                      class="form-control"
+	                      rows="3"
+	                      maxlength="1000"
+	                      placeholder="What did you discuss with the client?"></textarea>
+
+	        </div>
+
+	        <button type="submit"
+	                class="btn btn-success">
+
+	            <i class="bi bi-telephone-outbound"></i>
+	            Save Call
+
+	        </button>
+
+	    </form>
+
+	</div>
+	
     <!-- ADD NOTE -->
 
     <div class="box">
@@ -237,8 +348,68 @@ body{
             Conversation History
         </h4>
 
-		<hr>
+		<hr>	
 
+		<!-- CALL HISTORY -->
+
+		<h4 class="mt-4">
+		    <i class="bi bi-telephone-history"></i>
+		    Call History
+		</h4>
+
+		<div th:if="${#lists.isEmpty(callHistory)}">
+
+		    <div class="alert alert-secondary">
+		        No call history available
+		    </div>
+
+		</div>
+
+		<div th:each="call : ${callHistory}"
+		     class="card mb-2 shadow-sm">
+
+		    <div class="card-body">
+
+		        <div class="d-flex justify-content-between">
+
+		            <div>
+
+		                <strong
+		                    th:text="${call.callType}">
+		                </strong>
+
+		                -
+		                
+		                <span class="badge bg-success"
+		                      th:text="${call.callStatus}">
+		                </span>
+
+		            </div>
+
+		            <small class="text-muted"
+		                   th:text="${call.callTime}">
+		            </small>
+
+		        </div>
+
+		        <p class="mt-2 mb-0"
+		           th:if="${call.notes != null and !#strings.isEmpty(call.notes)}"
+		           th:text="${call.notes}">
+		        </p>
+
+		        <small class="text-muted">
+
+		            Called by:
+
+		            <span th:text="${call.user.username}">
+		            </span>
+
+		        </small>
+
+		    </div>
+
+		</div>
+		
 		<h4 class="mt-4">
 		    Lead Status Timeline
 		</h4>
